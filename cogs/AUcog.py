@@ -31,6 +31,8 @@ import asyncio
 # Long tasks:           0-3
 # Short tasks:          0.5
 
+# Settings
+
 default_settings = {
     "the_map":"skeld", "confirm_eject":True, "meetings_num":1, "meetings_cd":15,
     "discussion_t":15, "voting_t":120, "anon_votes":False, "speed_player":1,
@@ -60,6 +62,10 @@ valid_settings = {
     "tasks_short":range(5 + 1)
 }
 
+# Win types
+win_types = ["imp_kill", "imp_vote", "imp_sabotage",
+                "cm_vote", "cm_task"]
+
 class AUCog(commands.Cog):
 
     def __init__(self, bot):
@@ -78,13 +84,12 @@ class AUCog(commands.Cog):
         league = pd.DataFrame({
             'guild':        pd.Series([], dtype='str'),
             'timestamp':    pd.Series([], dtype='datetime64[ns]'),
-            'win_imposter': pd.Series([], dtype='bool'),
             'win_type':     pd.Series([], dtype='str'),
                 # imp_kill, imp_sabotage, imp_vote, crew_task, crew_vote
             'imposters':    pd.Series([], dtype='object'),
             'crewmates':    pd.Series([], dtype='object'),
             # Settings
-            "map":           pd.Series([], dtype='str'), 
+            "the_map":       pd.Series([], dtype='str'), 
             "confirm_eject": pd.Series([], dtype='bool'), 
             "meetings_num":  pd.Series([], dtype='int'), 
             "meetings_cd":   pd.Series([], dtype='int'), 
@@ -105,8 +110,8 @@ class AUCog(commands.Cog):
 
         league_csv = str(ctx.message.guild.id) + "_results.csv"
 
-        if not os.path.isfile(league_csv):
-            league.to_csv(league_csv)
+        # if not os.path.isfile(league_csv):
+        league.to_csv(league_csv)
 
         self.init_settings(ctx)
 
@@ -150,9 +155,12 @@ class AUCog(commands.Cog):
                 msgs.append(await ctx.send("❌ Error: Invalid setting `%s`!" % setting))
                 msgs.append(await ctx.send("💁 Valid settings: %s" % valid_setting_names))
 
-        elif len(contents) == 1 and contents[0] == "show":
+        elif len(contents) == 1 and (contents[0] == "show") or contents[0] == "valid":
 
-            msgs.append(await ctx.send(current_settings))
+            if contents[0] == "show":
+                msgs.append(await ctx.send(current_settings))
+            elif contents[0] == "valid":
+                msgs.append(await ctx.send("💁 Valid settings: %s" % valid_setting_names))
 
         else:
             msgs.append(await ctx.send("❌ Error: Supply setting and value!"))
@@ -160,46 +168,52 @@ class AUCog(commands.Cog):
 
 
     @commands.command(name='add', help='Show current league table')
-    async def add_game(self, ctx,
-                    imposters = "imposter", crewmates = "cm", win_imposter = False, win_type = "imp_vote", guild="foo",
-                    the_map="skeld", confirm_eject=True, meetings_num=1, meetings_cd=15,
-                    discussion_t=15, voting_t=120, anon_votes=False, speed_player=1,
-                    vision_cm=1, vision_imp=1.5, kill_cd=45, kill_dist="normal",
-                    tasks_visual=True, task_bar="never", tasks_common=1, tasks_long=1,
-                    tasks_short=2):
+    async def add_game(self, ctx):
+
+        msgs = []
+        msgs.append(ctx.message)
 
         # Get current table
         league_csv = str(ctx.message.guild.id) + "_results.csv"
         league = pd.read_csv(league_csv)
 
-        new_row = {
-            'guild':ctx.message.guild.id,
-            'timestamp':dt.datetime.now(),
-            'win_imposter':win_imposter,
-            'win_type':win_type,
-            'imposters':imposters,
-            'crewmates':crewmates,
-            # Settings
-            "map":the_map,
-            "confirm_eject":confirm_eject,
-            "meetings_num":meetings_num,
-            "meetings_cd":meetings_cd, 
-            "discussion_t":discussion_t,
-            "voting_t":voting_t,
-            "anon_votes":anon_votes, 
-            "speed_player":speed_player,
-            "vision_cm":vision_cm,
-            "vision_imp":vision_imp,
-            "kill_cd":kill_cd,
-            "kill_dist":kill_dist,
-            "tasks_visual":tasks_visual,
-            "task_bar":task_bar, 
-            "tasks_common":tasks_common, 
-            "tasks_long":tasks_long, 
-            "tasks_short":tasks_short, 
-        }
+        # Get current settings
+        guild_json = str(ctx.message.guild.id) + "_config.json"
+        with open(guild_json) as f:
+            current_settings = json.load(f)
 
-        l = league.append(new_row, ignore_index=True)
+        ## HACKY WAY OF GETTING THINGS
+        
+        contents = ctx.message.content.split()[1:]
+        msgs.append(await ctx.send(contents))
+
+        I = [i for i, x in enumerate(contents) if x == "I:"][0]
+        C = [i for i, x in enumerate(contents) if x == "C:"][0]
+        V = [i for i, x in enumerate(contents) if x == "V:"][0]
+
+        imposters = [contents[i] for i in range(I + 1, C)]
+        crewmates = [contents[i] for i in range(C + 1, V)]
+        victory = contents[V + 1]
+
+        ##
+        
+        msgs.append(await ctx.send("👹 Imposters: %s" % imposters))
+        msgs.append(await ctx.send("🧉 Crewmates: %s" % crewmates))
+        msgs.append(await ctx.send("🎮 Victory: %s" % victory))
+
+        if victory not in win_types:
+            msgs.append(await ctx.send("❌ Error: Invalid win condition `%s`!" % victory))
+
+        else:
+            
+            game = current_settings
+            game["guild"] = ctx.message.guild.id
+            game["timestamp"] = dt.datetime.now()
+            game["win_type"] = victory
+            game["imposters"] = imposters
+            game["crewmates"] = crewmates
+
+        l = league.append(game, ignore_index=True)
         l.to_csv(league_csv)
 
     @commands.command(name='show', help='Show current league table')
