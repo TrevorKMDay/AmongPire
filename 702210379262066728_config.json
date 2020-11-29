@@ -1,0 +1,19 @@
+{
+    "the_map": "polus",
+    "confirm_eject": true,
+    "meetings_num": 1,
+    "meetings_cd": 15,
+    "discussion_t": 15,
+    "voting_t": 120,
+    "anon_votes": false,
+    "speed_player": 1,
+    "vision_cm": 1,
+    "vision_imp": 1.5,
+    "kill_cd": 45,
+    "kill_dist": "normal",
+    "tasks_visual": true,
+    "task_bar": "never",
+    "tasks_common": 1,
+    "tasks_long": 1,
+    "tasks_short": 2
+}

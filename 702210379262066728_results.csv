@@ -1,0 +1,3 @@
+,Unnamed: 0,Unnamed: 0.1,guild,timestamp,win_imposter,win_type,imposters,crewmates,map,confirm_eject,meetings_num,meetings_cd,discussion_t,voting_t,anon_votes,speed_player,vision_cm,vision_imp,kill_cd,kill_dist,tasks_visual,task_bar,tasks_common,tasks_long,tasks_short
+0,0.0,,foo,2020-11-29 16:14:47.837262,False,imp_vote,imposter,cm,skeld,True,1,15,15,120,False,1,1,1.5,45,normal,True,never,1,1,2
+1,,,702210379262066728,2020-11-29 16:15:58.825101,False,imp_vote,imposter,cm,skeld,True,1,15,15,120,False,1,1,1.5,45,normal,True,never,1,1,2
