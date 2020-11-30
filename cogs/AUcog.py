@@ -66,6 +66,27 @@ valid_settings = {
 win_types = ["imp_kill", "imp_vote", "imp_sabotage",
                 "cm_vote", "cm_task"]
 
+# Settings
+settings_vals = [
+    ["the_map", 'Map'],
+    ["confirm_eject", 'Confrim Ejects'],
+    ["meetings_num", '# Meetings'],
+    ["meetings_cd" , 'Meeting Cooldown'],
+    ["discussion_t", 'Discussion Time'],
+    ["voting_t" , 'Voting Time'],
+    ["anon_votes", 'Anonymous Votes'],
+    ["speed_player", 'Player Speed'],
+    ["vision_cm" , 'Crew Vision'],
+    ["vision_imp" , 'Imposter Vision'],
+    ["kill_cd", 'Kill Cooldown'],
+    ["kill_dist", 'Kill Distance'],
+    ["tasks_visual", 'Visual Tasks'],
+    ["task_bar", 'Task Bar'],
+    ["tasks_common", '# Common Tasks'],
+    ["tasks_long", '# Long Tasks'],
+    ["tasks_short", '# Short Tasks'],
+]
+
 class AUCog(commands.Cog):
 
     def __init__(self, bot):
@@ -158,7 +179,19 @@ class AUCog(commands.Cog):
         elif len(contents) == 1 and (contents[0] == "show") or contents[0] == "valid":
 
             if contents[0] == "show":
-                msgs.append(await ctx.send(current_settings))
+                #create embed
+                formatted_settings = discord.Embed(
+                    title = f'Settings for current {} league',
+                    color = discord.Color.blue()
+                )
+
+                for item in settings_vals:
+                    formatted_settings.add_field(name=item[1], value=str(current_settings[item[0]]))
+
+                #show embed
+                #msgs.append(await ctx.send(current_settings))
+                msgs.append(await ctx.send(formatted_settings))
+                
             elif contents[0] == "valid":
                 msgs.append(await ctx.send("💁 Valid settings: %s" % valid_setting_names))
 
@@ -196,10 +229,25 @@ class AUCog(commands.Cog):
         victory = contents[V + 1]
 
         ##
+
+        added_game = discord.Embed(
+            title = f'Results from current game',
+            color = discord.Color.green()
+        )
+
         
+        added_game.add_field(name='👹 Imposters:', value=imposters)
+        added_game.add_field(name='🧉 Crewmates:', value=crewmates)
+        added_game.add_field(name='🎮 Victory:', value=victory)
+
+        #show embed
+        msgs.append(await ctx.send(added_game))
+        
+        '''
         msgs.append(await ctx.send("👹 Imposters: %s" % imposters))
         msgs.append(await ctx.send("🧉 Crewmates: %s" % crewmates))
         msgs.append(await ctx.send("🎮 Victory: %s" % victory))
+        '''
 
         if victory not in win_types:
             msgs.append(await ctx.send("❌ Error: Invalid win condition `%s`!" % victory))
@@ -213,8 +261,8 @@ class AUCog(commands.Cog):
             game["imposters"] = imposters
             game["crewmates"] = crewmates
 
-        l = league.append(game, ignore_index=True)
-        l.to_csv(league_csv)
+            l = league.append(game, ignore_index=True)
+            l.to_csv(league_csv)
 
     @commands.command(name='show', help='Show current league table')
     async def show_league_table(self, ctx):
